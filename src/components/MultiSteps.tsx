@@ -1,9 +1,9 @@
 import { createSignal, For, Match, Switch } from "solid-js";
 import { JSX } from "solid-js";
 
-type ChildrenStep =
-    | ((next: () => void, previous: () => void) => JSX.Element)
-    | (() => JSX.Element);
+type StepProps = { previous: () => void; next: () => void };
+
+type ChildrenStep = ((props: StepProps) => JSX.Element) | (() => JSX.Element);
 
 export function MultiSteps(props: { children: ChildrenStep[] }) {
     const [current, setCurrent] = createSignal(0);
@@ -18,7 +18,7 @@ export function MultiSteps(props: { children: ChildrenStep[] }) {
             <For each={props.children}>
                 {(child, index) => (
                     <Match when={current() === index()}>
-                        {child(next, previous)}
+                        {child({ previous, next })}
                     </Match>
                 )}
             </For>
