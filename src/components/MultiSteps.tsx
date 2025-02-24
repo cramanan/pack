@@ -1,7 +1,7 @@
 import { createSignal, For, Match, Switch } from "solid-js";
 import { JSX } from "solid-js";
 
-type StepProps = { previous: () => void; next: () => void };
+export type StepProps = { previous: () => void; next: () => void };
 
 type ChildrenStep = ((props: StepProps) => JSX.Element) | (() => JSX.Element);
 
