@@ -1,10 +1,20 @@
 import { createStore } from "solid-js/store";
 import { MultiSteps } from "../components/MultiSteps";
 import { defaultPack } from "../types/FileSystem";
-import { readDir } from "../lib/Pack";
+import { readDir, savePack } from "../lib/Pack";
+import { createResource } from "solid-js";
+import { appDataDir } from "@tauri-apps/api/path";
 
 export default function Creator() {
     const [pack, setPack] = createStore(defaultPack);
+    const [targetDirectory] = createResource(appDataDir);
+    const savePackInTargetDirectory = async () => {
+        console.log("saving pack at", targetDirectory());
+        const dst = targetDirectory();
+        if (!dst) return;
+        savePack(pack, dst);
+    };
+
     return (
         <>
             <header>Pack Creator</header>
@@ -41,6 +51,7 @@ export default function Creator() {
                             </div>
                             <input
                                 type="text"
+                                class="w-fit"
                                 value={pack.name}
                                 onChange={(e) =>
                                     setPack("name", e.target.value)
@@ -56,10 +67,10 @@ export default function Creator() {
                 {({ previous }) => (
                     <>
                         <h2>Save the pack</h2>
-                        <div>Dialog to see saved path (default)</div>
+                        <input type="text" value={targetDirectory()} />
                         <div class="flex gap-3">
                             <button onClick={() => previous()}>Back</button>
-                            <button onClick={() => console.log("Saving Pack")}>
+                            <button onClick={savePackInTargetDirectory}>
                                 Done
                             </button>
                         </div>
