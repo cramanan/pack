@@ -13,8 +13,8 @@ type ChildrenStep =
 
 export function createStep<
     T extends Record<string, unknown> & StepProps,
-    U extends Omit<T, keyof StepProps>
->(component: (args: Prettify<T>) => JSXElement, args: Prettify<U>) {
+    U = Omit<T, keyof StepProps>
+>(component: (args: T) => JSXElement, args: Prettify<U>) {
     return function (props: StepProps) {
         return component({ ...args, ...props } as T);
     };

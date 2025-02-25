@@ -93,10 +93,6 @@ export default function Creator() {
                 {createPage}
                 {editPage}
                 {savePage}
-                <div>
-                    <h1>Done</h1>
-                    <a href="/">Back to Home</a>
-                </div>
             </MultiSteps>
         </>
     );
