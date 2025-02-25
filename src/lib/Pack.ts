@@ -11,5 +11,6 @@ export async function readDir() {
 }
 
 export async function savePack(pack: Pack, targetDirectory: string) {
+    console.log("saving pack at", targetDirectory);
     return await invoke<string>(Commands.SAVE_PACK, { pack, targetDirectory });
 }

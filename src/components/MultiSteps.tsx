@@ -1,11 +1,24 @@
 import { createSignal, For, JSXElement, Match, Switch } from "solid-js";
 
+type Prettify<T> = {
+    [K in keyof T]: T[K];
+} & {};
+
 export type StepProps = { previous: () => void; next: () => void };
 
 type ChildrenStep =
     | ((props: StepProps) => JSXElement)
     | (() => JSXElement)
     | JSXElement;
+
+export function createStep<
+    T extends Record<string, unknown> & StepProps,
+    U extends Omit<T, keyof StepProps>
+>(component: (args: Prettify<T>) => JSXElement, args: Prettify<U>) {
+    return function (props: StepProps) {
+        return component({ ...args, ...props } as T);
+    };
+}
 
 export function MultiSteps(props: { children: ChildrenStep[] }) {
     const [current, setCurrent] = createSignal(0);
