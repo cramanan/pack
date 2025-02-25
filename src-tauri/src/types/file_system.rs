@@ -7,7 +7,8 @@ use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct File {
-    name: String,
+    pub name: String,
+    pub body: Option<Vec<u8>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -17,10 +18,10 @@ pub struct Symlink {
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Directory {
-    name: String,
-    files: Vec<File>,
-    symlinks: Vec<Symlink>,
-    directories: Vec<Directory>,
+    pub name: String,
+    pub files: Vec<File>,
+    pub symlinks: Vec<Symlink>,
+    pub directories: Vec<Directory>,
 }
 
 impl TryFrom<&PathBuf> for Directory {
@@ -54,6 +55,7 @@ impl TryFrom<&PathBuf> for Directory {
             } else if file_type.is_file() {
                 directory.files.push(File {
                     name: entry.file_name().to_str().unwrap().to_string(), // TODO: remove unwrap
+                    body: None,
                 });
             }
         }
@@ -63,13 +65,13 @@ impl TryFrom<&PathBuf> for Directory {
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Pack {
-    id: String,
-    name: String,
+    pub id: String,
+    pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    origin: Option<PathBuf>,
-    directories: Vec<Directory>,
-    files: Vec<File>,
-    symlinks: Vec<Symlink>,
+    pub origin: Option<PathBuf>,
+    pub directories: Vec<Directory>,
+    pub files: Vec<File>,
+    pub symlinks: Vec<Symlink>,
 }
 
 impl From<Directory> for Pack {
