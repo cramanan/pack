@@ -17,6 +17,7 @@ export type Directory = {
 
 export type Pack = Directory & {
     id: string;
+    origin?: string;
 };
 
 export const defaultPack: Pack = {

@@ -7,12 +7,12 @@ import { appDataDir } from "@tauri-apps/api/path";
 
 export default function Creator() {
     const [pack, setPack] = createStore(defaultPack);
-    const [targetDirectory] = createResource(appDataDir);
+    const [directory] = createResource(appDataDir);
     const savePackInTargetDirectory = async () => {
-        console.log("saving pack at", targetDirectory());
-        const dst = targetDirectory();
-        if (!dst) return;
-        savePack(pack, dst);
+        const targetDirectory = directory();
+        if (!targetDirectory) return;
+        console.log("saving pack at", targetDirectory);
+        savePack(pack, targetDirectory);
     };
 
     return (
@@ -23,14 +23,10 @@ export default function Creator() {
                     <>
                         <h2>Create a pack</h2>
                         <div class="flex gap-3">
-                            <button onClick={() => next()}>From scratch</button>
+                            <button onClick={next}>From scratch</button>
                             <button
                                 onClick={async () => {
-                                    const directory = await readDir();
-                                    setPack((prev) => ({
-                                        ...prev,
-                                        ...directory,
-                                    }));
+                                    setPack(await readDir());
                                     next();
                                 }}
                             >
@@ -67,7 +63,7 @@ export default function Creator() {
                 {({ previous }) => (
                     <>
                         <h2>Save the pack</h2>
-                        <input type="text" value={targetDirectory()} />
+                        <input type="text" value={directory()} />
                         <div class="flex gap-3">
                             <button onClick={() => previous()}>Back</button>
                             <button onClick={savePackInTargetDirectory}>

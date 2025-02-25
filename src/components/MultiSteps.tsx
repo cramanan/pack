@@ -14,7 +14,7 @@ export function MultiSteps(props: { children: ChildrenStep[] }) {
     const previous = () => setCurrent((prev) => Math.max(prev - 1, 0));
 
     return (
-        <Switch fallback={<div>Invalid step</div>}>
+        <Switch>
             <For each={props.children}>
                 {(child, index) => (
                     <Match when={current() === index()}>

@@ -23,10 +23,10 @@ pub struct Directory {
     directories: Vec<Directory>,
 }
 
-impl TryFrom<PathBuf> for Directory {
+impl TryFrom<&PathBuf> for Directory {
     type Error = Error;
 
-    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+    fn try_from(path: &PathBuf) -> Result<Self, Self::Error> {
         let mut directory = Directory::default();
 
         let entries = read_dir(&path)?;
@@ -50,7 +50,7 @@ impl TryFrom<PathBuf> for Directory {
             if file_type.is_dir() {
                 directory
                     .directories
-                    .push(Directory::try_from(absolute_path)?);
+                    .push(Directory::try_from(&absolute_path)?);
             } else if file_type.is_file() {
                 directory.files.push(File {
                     name: entry.file_name().to_str().unwrap().to_string(), // TODO: remove unwrap
@@ -65,6 +65,8 @@ impl TryFrom<PathBuf> for Directory {
 pub struct Pack {
     id: String,
     name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    origin: Option<PathBuf>,
     directories: Vec<Directory>,
     files: Vec<File>,
     symlinks: Vec<Symlink>,
@@ -87,6 +89,7 @@ impl From<Directory> for Pack {
 
         Self {
             id,
+            origin: None,
             name,
             directories,
             files,
@@ -99,6 +102,8 @@ impl TryFrom<PathBuf> for Pack {
     type Error = Error;
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
-        Directory::try_from(path).map(Pack::from)
+        let mut pack = Directory::try_from(&path).map(Pack::from)?;
+        pack.origin = Some(path);
+        Ok(pack)
     }
 }

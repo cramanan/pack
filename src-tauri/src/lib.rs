@@ -1,6 +1,6 @@
 mod fs;
 mod types;
-use fs::read_dir;
+use fs::{read_dir, save_pack};
 use tauri::generate_handler;
 
 pub fn to_string(value: impl ToString) -> String {
@@ -12,7 +12,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(generate_handler![read_dir])
+        .invoke_handler(generate_handler![read_dir, save_pack])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
