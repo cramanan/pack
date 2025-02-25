@@ -16,12 +16,36 @@ pub struct Symlink {
     name: String,
 }
 
+pub trait AsDirectory {
+    fn name(&self) -> &String;
+    fn directories(&self) -> &Vec<Directory>;
+    fn files(&self) -> &Vec<File>;
+    fn symlinks(&self) -> &Vec<Symlink>;
+}
+
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Directory {
     pub name: String,
     pub files: Vec<File>,
     pub symlinks: Vec<Symlink>,
     pub directories: Vec<Directory>,
+}
+
+impl AsDirectory for Directory {
+    fn name(&self) -> &String {
+        &self.name
+    }
+    fn directories(&self) -> &Vec<Directory> {
+        &self.directories
+    }
+
+    fn files(&self) -> &Vec<File> {
+        &self.files
+    }
+
+    fn symlinks(&self) -> &Vec<Symlink> {
+        &self.symlinks
+    }
 }
 
 impl TryFrom<&PathBuf> for Directory {
@@ -72,6 +96,23 @@ pub struct Pack {
     pub directories: Vec<Directory>,
     pub files: Vec<File>,
     pub symlinks: Vec<Symlink>,
+}
+
+impl AsDirectory for Pack {
+    fn name(&self) -> &String {
+        &self.name
+    }
+    fn directories(&self) -> &Vec<Directory> {
+        &self.directories
+    }
+
+    fn files(&self) -> &Vec<File> {
+        &self.files
+    }
+
+    fn symlinks(&self) -> &Vec<Symlink> {
+        &self.symlinks
+    }
 }
 
 impl From<Directory> for Pack {

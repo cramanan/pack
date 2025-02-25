@@ -1,5 +1,5 @@
 use crate::to_string;
-use crate::types::Pack;
+use crate::types::{AsDirectory, Pack};
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use std::fs::{create_dir_all, read_dir, File};
@@ -10,23 +10,44 @@ pub async fn read_directory(path: PathBuf) -> Result<Pack, String> {
     Pack::try_from(path).map_err(to_string)
 }
 
+fn create_directory(
+    tar: &mut tar::Builder<GzEncoder<File>>,
+    origin: &PathBuf,
+    path: &PathBuf,
+    directory: &dyn AsDirectory,
+) -> Result<(), std::io::Error> {
+    for subfile in directory.files() {
+        println!(
+            "{:?}, {}",
+            origin.join(path).join(&subfile.name),
+            &subfile.name
+        );
+        tar.append_path_with_name(
+            &origin.join(path).join(&subfile.name),
+            path.join(&subfile.name),
+        )?
+    }
+
+    for subdir in directory.directories() {
+        create_directory(tar, &origin, &path.join(subdir.name()), subdir)?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn save_pack(pack: Pack, target_directory: PathBuf) -> Result<PathBuf, String> {
     let pack_directory = target_directory.join("packs");
     if !pack_directory.exists() {
         create_dir_all(&pack_directory).map_err(to_string)?;
     }
-    let mut archive_name = pack_directory.join(pack.id);
+    let mut archive_name = pack_directory.join(&pack.id);
     archive_name.set_extension("pck");
     let tar_gz = File::create(&archive_name).map_err(to_string)?;
     let enc = GzEncoder::new(tar_gz, Compression::best());
-    let mut tar = tar::Builder::new(enc);
-    if let Some(origin) = pack.origin {
-        for subfile in pack.files {
-            let mut file = File::open(origin.join(&subfile.name)).map_err(to_string)?;
-            tar.append_file(&subfile.name, &mut file)
-                .map_err(to_string)?
-        }
+    let mut tar: tar::Builder<GzEncoder<File>> = tar::Builder::new(enc);
+
+    if let Some(ref origin) = pack.origin {
+        create_directory(&mut tar, origin, &PathBuf::new(), &pack).map_err(to_string)?;
     }
 
     tar.finish().map_err(to_string)?;
