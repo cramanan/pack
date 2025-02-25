@@ -1,24 +1,31 @@
-import { createSignal, For, Match, Switch } from "solid-js";
-import { JSX } from "solid-js";
+import { createSignal, For, JSXElement, Match, Switch } from "solid-js";
 
 export type StepProps = { previous: () => void; next: () => void };
 
-type ChildrenStep = ((props: StepProps) => JSX.Element) | (() => JSX.Element);
+type ChildrenStep =
+    | ((props: StepProps) => JSXElement)
+    | (() => JSXElement)
+    | JSXElement;
 
 export function MultiSteps(props: { children: ChildrenStep[] }) {
     const [current, setCurrent] = createSignal(0);
 
-    const next = () =>
+    // prevent illegal invocation with variadic
+    const next = (..._args: unknown[]) =>
         setCurrent((prev) => Math.min(prev + 1, props.children.length - 1));
 
-    const previous = () => setCurrent((prev) => Math.max(prev - 1, 0));
+    // prevent illegal invocation with variadic
+    const previous = (..._args: unknown[]) =>
+        setCurrent((prev) => Math.max(prev - 1, 0));
 
     return (
         <Switch>
             <For each={props.children}>
                 {(child, index) => (
                     <Match when={current() === index()}>
-                        {child({ previous, next })}
+                        {child instanceof Function
+                            ? child({ previous, next })
+                            : child}
                     </Match>
                 )}
             </For>
