@@ -2,74 +2,48 @@ use crate::to_string;
 use crate::types::{AsDirectory, Pack};
 use flate2::write::GzEncoder;
 use flate2::Compression;
-use std::fs::{create_dir_all, read_dir, File};
+use std::fs::{create_dir_all, File};
 use std::path::PathBuf;
+use tar::{Builder, Header};
 
 #[tauri::command]
 pub async fn read_directory(path: PathBuf) -> Result<Pack, String> {
     Pack::try_from(path).map_err(to_string)
 }
 
-fn create_directory(
-    tar: &mut tar::Builder<GzEncoder<File>>,
-    origin: &PathBuf,
-    path: &PathBuf,
+fn build_directory(
+    builder: &mut Builder<GzEncoder<File>>,
     directory: &dyn AsDirectory,
-) -> Result<(), std::io::Error> {
-    for subfile in directory.files() {
-        println!(
-            "{:?}, {}",
-            origin.join(path).join(&subfile.name),
-            &subfile.name
-        );
-        tar.append_path_with_name(
-            &origin.join(path).join(&subfile.name),
-            path.join(&subfile.name),
-        )?
+    path: PathBuf,
+) -> std::io::Result<()> {
+    for sub_file in directory.files() {
+        println!("{:?}", path.join(&sub_file.name));
+        let mut header = Header::new_gnu();
+        header.set_path(path.join(&sub_file.name))?;
+        header.set_mode(0o755);
+        header.set_size(0);
+        header.set_cksum();
+        builder.append(&header, "".as_bytes())?;
     }
 
-    for subdir in directory.directories() {
-        create_directory(tar, &origin, &path.join(subdir.name()), subdir)?;
+    for sub_directory in directory.directories() {
+        build_directory(builder, sub_directory, path.join(sub_directory.name()))?;
     }
+
     Ok(())
 }
 
 #[tauri::command]
 pub async fn save_pack(pack: Pack, target_directory: PathBuf) -> Result<PathBuf, String> {
-    let pack_directory = target_directory.join("packs");
-    if !pack_directory.exists() {
-        create_dir_all(&pack_directory).map_err(to_string)?;
+    let archive_path = target_directory.join("packs");
+    if !archive_path.exists() {
+        create_dir_all(&archive_path).map_err(to_string)?;
     }
-    let mut archive_name = pack_directory.join(&pack.id);
-    archive_name.set_extension("pck");
-    let tar_gz = File::create(&archive_name).map_err(to_string)?;
-    let enc = GzEncoder::new(tar_gz, Compression::best());
-    let mut tar: tar::Builder<GzEncoder<File>> = tar::Builder::new(enc);
-
-    if let Some(ref origin) = pack.origin {
-        create_directory(&mut tar, origin, &PathBuf::new(), &pack).map_err(to_string)?;
-    }
-
-    tar.finish().map_err(to_string)?;
+    let archive_name = archive_path.join(&pack.name).with_extension("pck");
+    let file = File::create(&archive_name).map_err(to_string)?;
+    let enc = GzEncoder::new(file, Compression::best());
+    let mut builder = Builder::new(enc);
+    build_directory(&mut builder, &pack, PathBuf::new()).map_err(to_string)?;
+    builder.finish().map_err(to_string)?;
     Ok(archive_name)
-}
-
-#[tauri::command]
-pub async fn read_packs_name(target_directory: PathBuf) -> Result<Vec<PathBuf>, String> {
-    let pack_directory = target_directory.join("packs");
-    if !pack_directory.exists() {
-        Err("No packs directory found".to_string())
-    } else {
-        let entries = read_dir(pack_directory).map_err(to_string)?;
-        let predicate = |res: Result<std::fs::DirEntry, std::io::Error>| {
-            if let Ok(entry) = res {
-                PathBuf::from(entry.file_name())
-                    .file_stem()
-                    .map(PathBuf::from)
-            } else {
-                None
-            }
-        };
-        Ok(entries.filter_map(predicate).collect())
-    }
 }

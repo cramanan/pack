@@ -5,7 +5,7 @@ export type Symlink = {
 
 export type File = {
     name: string;
-    body: string;
+    body?: string;
 };
 
 export type Directory = {

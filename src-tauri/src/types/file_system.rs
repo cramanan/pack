@@ -2,16 +2,17 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::fs::read_dir;
 use std::io::Error;
+use std::ops::Deref;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct File {
     pub name: String,
-    pub body: Option<Vec<u8>>,
+    pub body: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Symlink {
     name: String,
 }
@@ -23,7 +24,7 @@ pub trait AsDirectory {
     fn symlinks(&self) -> &Vec<Symlink>;
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct Directory {
     pub name: String,
     pub files: Vec<File>,
@@ -87,9 +88,8 @@ impl TryFrom<&PathBuf> for Directory {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Pack {
-    pub id: String,
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub origin: Option<PathBuf>,
@@ -115,6 +115,16 @@ impl AsDirectory for Pack {
     }
 }
 
+impl Pack {
+    pub fn with_origin<P>(mut self, origin: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.origin = Some(origin.into());
+        self
+    }
+}
+
 impl From<Directory> for Pack {
     fn from(
         Directory {
@@ -124,14 +134,7 @@ impl From<Directory> for Pack {
             directories,
         }: Directory,
     ) -> Self {
-        let id = {
-            let uuid = Uuid::new_v4();
-            let timestamp = Utc::now().format("%Y%m%d%H%M%S").to_string();
-            format!("{}_{}", uuid, timestamp)
-        };
-
         Self {
-            id,
             origin: None,
             name,
             directories,
@@ -145,8 +148,7 @@ impl TryFrom<PathBuf> for Pack {
     type Error = Error;
 
     fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
-        let mut pack = Directory::try_from(&path).map(Pack::from)?;
-        pack.origin = Some(path);
-        Ok(pack)
+        let pack = Directory::try_from(&path).map(Pack::from)?;
+        Ok(pack.with_origin(path))
     }
 }

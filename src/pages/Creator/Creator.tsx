@@ -1,32 +1,17 @@
-import { createStore, SetStoreFunction } from "solid-js/store";
+import { createMutable, createStore } from "solid-js/store";
 import { createStep, MultiSteps, StepProps } from "../../components/MultiSteps";
-import { defaultPack, Pack } from "../../types/FileSystem";
-import { readDir, savePack } from "../../lib/Pack";
-import { createResource, Resource } from "solid-js";
+import { defaultPack, File, Pack } from "../../types/fs";
+import { createEffect, createResource, createSignal, Show } from "solid-js";
 import { appDataDir } from "@tauri-apps/api/path";
-import FileTree from "./FileTree";
+import FileTree from "../../components/FileTree";
+import { savePack } from "../../lib/Pack";
 
-function Create(props: { setPack: SetStoreFunction<Pack> } & StepProps) {
+function Create(props: { pack: Pack } & StepProps) {
     return (
         <>
             <h2>Create a pack</h2>
             <div class="flex gap-3">
-                <button
-                    onClick={() => {
-                        props.setPack({ ...defaultPack });
-                        props.next();
-                    }}
-                >
-                    From scratch
-                </button>
-                <button
-                    onClick={async () => {
-                        props.setPack({ ...(await readDir()) });
-                        props.next();
-                    }}
-                >
-                    From a local directory
-                </button>
+                <button onClick={props.next}>From scratch</button>
             </div>
             <div>
                 <a href="/">Back</a>
@@ -36,57 +21,68 @@ function Create(props: { setPack: SetStoreFunction<Pack> } & StepProps) {
 }
 
 function Edit(props: { pack: Pack } & StepProps) {
+    const [file, setFile] = createStore<File>({
+        name: "untitled",
+    });
+
     return (
-        <>
-            <form onSubmit={(e) => e.preventDefault()}>
-                <h2>Edit the pack</h2>
-                <input type="text" value={props.pack.id} />
-                <FileTree directory={props.pack} />
-            </form>
-            <div class="flex gap-3">
-                <button onClick={props.previous}>Back</button>
-                <button onClick={props.next}>Next</button>
+        <div class="flex justify-between">
+            <div>
+                <form onSubmit={(e) => e.preventDefault()}>
+                    <h2>Edit the pack</h2>
+                    <FileTree directory={props.pack} onNewFile={setFile} />
+                </form>
+                <div class="flex gap-3">
+                    <button onClick={props.previous}>Back</button>
+                    <button onClick={props.next}>Next</button>
+                </div>
             </div>
-        </>
+
+            <aside>
+                <h1>editor</h1>
+                <h2>{file.name}</h2>
+                <textarea value={file.body ?? ""}></textarea>
+            </aside>
+        </div>
     );
 }
 
-function Save(props: { directory: Resource<string>; pack: Pack } & StepProps) {
-    const savePackInTargetDirectory = async () => {
-        const targetDirectory = props.directory();
+function Save(props: { pack: Pack } & StepProps) {
+    const [directory] = createResource(appDataDir);
+    const savePackInTargetDirectory = () => {
+        const targetDirectory = directory();
         if (!targetDirectory) return;
-        const installedPath = await savePack(props.pack, targetDirectory);
-        console.log(installedPath);
+        savePack(props.pack, targetDirectory);
     };
-
     return (
         <>
             <h2>Save the pack</h2>
-            <input type="text" value={props.directory()} />
+            <div>
+                <input type="text" value={directory()} />
+                <div>dialog here</div>
+            </div>
             <div class="flex gap-3">
                 <button onClick={props.previous}>Back</button>
-                <button onClick={savePackInTargetDirectory}>Done</button>
+                <button onClick={savePackInTargetDirectory}>SAVE</button>
             </div>
         </>
     );
 }
 
 export default function Creator() {
-    const [pack, setPack] = createStore({ ...defaultPack });
-    const [directory] = createResource(appDataDir);
+    const pack = createMutable({ ...defaultPack });
 
-    const createPage = createStep(Create, { setPack });
+    const createPage = createStep(Create, { pack });
     const editPage = createStep(Edit, { pack });
-    const savePage = createStep(Save, { directory, pack });
+    const savePage = createStep(Save, { pack });
 
     return (
         <>
             <header>Pack Creator</header>
             <MultiSteps>
-                {createPage}
+                {/* {createPage} */}
                 {editPage}
                 {savePage}
-                <div>Done</div>
             </MultiSteps>
         </>
     );

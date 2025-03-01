@@ -1,4 +1,11 @@
-import { createSignal, For, JSXElement, Match, Switch } from "solid-js";
+import {
+    Component,
+    createSignal,
+    For,
+    JSXElement,
+    Match,
+    Switch,
+} from "solid-js";
 
 type Prettify<T> = {
     [K in keyof T]: T[K];
@@ -14,7 +21,7 @@ type ChildrenStep =
 export function createStep<
     T extends Record<string, unknown> & StepProps,
     U extends Omit<T, keyof StepProps>
->(component: (args: T) => JSXElement, args: Prettify<U>) {
+>(component: Component<T>, args: Prettify<U>) {
     return (props: StepProps) => component({ ...args, ...props } as T);
 }
 
