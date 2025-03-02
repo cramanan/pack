@@ -38,10 +38,10 @@ export default function FileTree(props: { directory: Directory } & Callbacks) {
     };
 
     return (
-        <div class="px-3">
+        <div class="px-3 select-none cursor-pointer">
             <div class="flex items-center gap-1">
                 <Folder size={20} />
-                <span>{props.directory.name}</span>
+                <h2>{props.directory.name}</h2>
                 <FilePlus size={20} onClick={addFile} />
                 <FolderPlus size={20} onClick={addDirectory} />
             </div>
@@ -58,13 +58,13 @@ export default function FileTree(props: { directory: Directory } & Callbacks) {
                 {(file) => (
                     <div class="flex items-center gap-2">
                         <div
-                            class="flex items-center select-none"
+                            class="flex items-center"
                             onDblClick={() =>
                                 props.onFileClick && props.onFileClick(file)
                             }
                         >
                             <FileIcon />
-                            <span>{file.name}</span>
+                            <div class="cursor-default">{file.name}</div>
                         </div>
                         <Trash size={20} />
                     </div>

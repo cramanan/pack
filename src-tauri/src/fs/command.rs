@@ -1,13 +1,13 @@
 use crate::to_string;
 use crate::types::fs::{AsDirectory, Pack};
-use flate2::write::GzEncoder;
 use flate2::Compression;
-use std::fs::{create_dir_all, File};
+use flate2::write::GzEncoder;
+use std::fs::File;
 use std::path::PathBuf;
 use tar::{Builder, Header};
 
 #[tauri::command]
-pub async fn read_directory(path: PathBuf) -> Result<Pack, String> {
+pub async fn import_from_directory(path: PathBuf) -> Result<Pack, String> {
     Pack::try_from(path).map_err(to_string)
 }
 
@@ -34,19 +34,47 @@ fn build_directory(
     Ok(())
 }
 
+fn build_directory_from_origin(
+    builder: &mut Builder<GzEncoder<File>>,
+    directory: &dyn AsDirectory,
+    origin: &PathBuf,
+    path: PathBuf,
+) -> std::io::Result<()> {
+    for subfile in directory.files() {
+        println!(
+            "{:?}, {:?}",
+            origin.join(&path).join(&subfile.name),
+            path.join(&subfile.name)
+        );
+
+        builder.append_path_with_name(
+            origin.join(&path).join(&subfile.name),
+            path.join(&subfile.name),
+        )?
+    }
+
+    for subdir in directory.directories() {
+        build_directory_from_origin(builder, subdir, &origin, path.join(subdir.name()))?;
+    }
+
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn save_pack(mut pack: Pack, target_directory: PathBuf) -> Result<PathBuf, String> {
-    let archive_path = target_directory.join("packs");
-    if !archive_path.exists() {
-        create_dir_all(&archive_path).map_err(to_string)?;
-    }
-    let archive_name = archive_path.join(&pack.name).with_extension("pck");
     pack.clear_bodies();
-
+    let archive_name = target_directory.join(&pack.name).with_extension("pck");
     let file = File::create(&archive_name).map_err(to_string)?;
     let enc = GzEncoder::new(file, Compression::best());
     let mut builder = Builder::new(enc);
-    build_directory(&mut builder, &pack, PathBuf::new()).map_err(to_string)?;
+
+    if let Some(ref origin) = pack.origin {
+        build_directory_from_origin(&mut builder, &pack, &origin, PathBuf::new())
+            .map_err(to_string)?;
+    } else {
+        build_directory(&mut builder, &pack, PathBuf::new()).map_err(to_string)?;
+    }
+
     builder.finish().map_err(to_string)?;
     Ok(archive_name)
 }

@@ -1,17 +1,25 @@
 import { createMutable } from "solid-js/store";
 import { createStep, MultiSteps, StepProps } from "../../components/MultiSteps";
 import { defaultPack, File, Pack } from "../../types/fs";
-import { createResource, createSignal } from "solid-js";
+import { createEffect, createResource, createSignal } from "solid-js";
 import { appDataDir } from "@tauri-apps/api/path";
 import FileTree from "../../components/FileTree";
-import { savePack } from "../../lib/Pack";
+import { importFromDirectory, openDirectory, savePack } from "../../lib/Pack";
+import { path } from "@tauri-apps/api";
 
 function Create(props: { pack: Pack } & StepProps) {
+    const handleImport = async () => {
+        const pack = await importFromDirectory();
+        Object.assign(props.pack, pack);
+        props.next();
+    };
+
     return (
         <>
             <h2>Create a pack</h2>
             <div class="flex gap-3">
                 <button onClick={props.next}>From scratch</button>
+                <button onClick={handleImport}>From a local directory</button>
             </div>
             <div>
                 <a href="/">Back</a>
@@ -53,7 +61,7 @@ function Edit(props: { pack: Pack } & StepProps) {
                 <textarea
                     class="border"
                     onInput={onInput}
-                    value={selectedFile()?.body}
+                    value={selectedFile()?.body ?? ""}
                 ></textarea>
             </aside>
         </div>
@@ -61,20 +69,35 @@ function Edit(props: { pack: Pack } & StepProps) {
 }
 
 function Save(props: { pack: Pack } & StepProps) {
-    const [directory] = createResource(appDataDir);
+    const [directory, { mutate }] = createResource(appDataDir, {
+        initialValue: "",
+    });
+
+    const chooseTargetDirectory = async () => {
+        const target = await openDirectory();
+        target && mutate(target);
+    };
+
     const savePackInTargetDirectory = async () => {
         const targetDirectory = directory();
         if (!targetDirectory) return;
-        await savePack(props.pack, targetDirectory);
+        const path = await savePack(props.pack, targetDirectory);
+        console.log(path);
         props.next();
     };
+
+    createEffect(async () => {
+        const target = directory();
+        target && console.log(await path.join(target, props.pack.name, ".pck"));
+    });
 
     return (
         <>
             <h2>Save the pack</h2>
             <div>
-                <input type="text" value={directory()} />
-                <div>dialog here</div>
+                <div>{directory()}</div>
+                <div onClick={chooseTargetDirectory}>Choose Target</div>
+                <div>Pack will be saved as: {}</div>
             </div>
             <div class="flex gap-3">
                 <button onClick={props.previous}>Back</button>
@@ -88,7 +111,6 @@ const steps = [Create, Edit, Save];
 
 export default function Creator() {
     const pack = createMutable({ ...defaultPack });
-
     const pages = steps.map((component) => createStep(component, { pack }));
 
     return (
