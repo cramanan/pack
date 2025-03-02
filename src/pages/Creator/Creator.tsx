@@ -84,21 +84,17 @@ function Save(props: { pack: Pack } & StepProps) {
     );
 }
 
+const steps = [Create, Edit, Save];
+
 export default function Creator() {
     const pack = createMutable({ ...defaultPack });
 
-    const createPage = createStep(Create, { pack });
-    const editPage = createStep(Edit, { pack });
-    const savePage = createStep(Save, { pack });
+    const pages = steps.map((component) => createStep(component, { pack }));
 
     return (
         <>
             <header>Pack Creator</header>
-            <MultiSteps>
-                {createPage}
-                {editPage}
-                {savePage}
-            </MultiSteps>
+            <MultiSteps>{pages}</MultiSteps>
         </>
     );
 }
