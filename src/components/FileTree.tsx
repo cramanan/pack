@@ -5,18 +5,21 @@ import FileIcon from "lucide-solid/icons/file";
 import FilePlus from "lucide-solid/icons/file-plus-2";
 import FolderPlus from "lucide-solid/icons/folder-plus";
 import Trash from "lucide-solid/icons/trash-2";
+import { createMutable } from "solid-js/store";
 
 type Callbacks = {
     onNewFile?: (file: File) => void;
+    onFileClick?: (file: File) => void;
 };
 
 export default function FileTree(props: { directory: Directory } & Callbacks) {
     const addFile = () => {
         const name = prompt("File Name:");
         if (!name?.trim()) return;
-        const file = { name, body: "" };
+        const file = createMutable<File>({ name });
         const files = [...props.directory.files, file];
         props.directory.files = files;
+
         props.onNewFile && props.onNewFile(file);
     };
 
@@ -43,7 +46,12 @@ export default function FileTree(props: { directory: Directory } & Callbacks) {
                 <FolderPlus size={20} onClick={addDirectory} />
             </div>
             <For each={props.directory.directories}>
-                {(subdirectory) => <FileTree directory={subdirectory} />}
+                {(subdirectory) => (
+                    <FileTree
+                        directory={subdirectory}
+                        onNewFile={props.onNewFile}
+                    />
+                )}
             </For>
             <For each={props.directory.files}>
                 {(file) => (

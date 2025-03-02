@@ -1,10 +1,11 @@
-import { createMutable, createStore } from "solid-js/store";
+import { createMutable, modifyMutable } from "solid-js/store";
 import { createStep, MultiSteps, StepProps } from "../../components/MultiSteps";
 import { defaultPack, File, Pack } from "../../types/fs";
-import { createEffect, createResource, createSignal, Show } from "solid-js";
+import { createEffect, createResource, createSignal } from "solid-js";
 import { appDataDir } from "@tauri-apps/api/path";
 import FileTree from "../../components/FileTree";
 import { savePack } from "../../lib/Pack";
+// import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 
 function Create(props: { pack: Pack } & StepProps) {
     return (
@@ -21,27 +22,41 @@ function Create(props: { pack: Pack } & StepProps) {
 }
 
 function Edit(props: { pack: Pack } & StepProps) {
-    const [file, setFile] = createStore<File>({
-        name: "untitled",
-    });
+    const [selectedFile, setSelectedFile] = createSignal<File>();
+    const [body, setBody] = createSignal("");
+
+    const onInput = (e: { target: HTMLTextAreaElement }) =>
+        setBody(e.target.value);
+
+    const onSave = () => selectedFile() && (selectedFile()!.body = body());
+
+    // onMount(async () => {
+    //     await unregister("CommandOrControl+S"); // TODO: Maybe remove
+    //     await register("CommandOrControl+S", console.log);
+    // });
+    // onCleanup(() => unregister("CommandOrControl+S"));
 
     return (
         <div class="flex justify-between">
             <div>
                 <form onSubmit={(e) => e.preventDefault()}>
                     <h2>Edit the pack</h2>
-                    <FileTree directory={props.pack} onNewFile={setFile} />
+                    <FileTree
+                        directory={props.pack}
+                        onNewFile={setSelectedFile}
+                    />
                 </form>
                 <div class="flex gap-3">
                     <button onClick={props.previous}>Back</button>
                     <button onClick={props.next}>Next</button>
                 </div>
             </div>
-
+            <pre>{JSON.stringify(props.pack, null, 4)}</pre>
             <aside>
                 <h1>editor</h1>
-                <h2>{file.name}</h2>
-                <textarea value={file.body ?? ""}></textarea>
+                <h2>{selectedFile()?.name}</h2>
+                <button onClick={onSave}>Save</button>
+                <textarea class="border" onInput={onInput}></textarea>
             </aside>
         </div>
     );
