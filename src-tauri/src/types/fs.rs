@@ -1,10 +1,7 @@
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::fs::read_dir;
 use std::io::Error;
-use std::ops::Deref;
 use std::path::PathBuf;
-use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct File {
@@ -19,9 +16,23 @@ pub struct Symlink {
 
 pub trait AsDirectory {
     fn name(&self) -> &String;
+    // fn name_mut(&mut self) -> &mut String;
     fn directories(&self) -> &Vec<Directory>;
+    fn directories_mut(&mut self) -> &mut Vec<Directory>;
     fn files(&self) -> &Vec<File>;
-    fn symlinks(&self) -> &Vec<Symlink>;
+    fn files_mut(&mut self) -> &mut Vec<File>;
+    // fn symlinks(&self) -> &Vec<Symlink>;
+    // fn symlinks_mut(&mut self) -> &mut Vec<Symlink>;
+
+    fn clear_bodies(&mut self) {
+        for sub_file in self.files_mut().iter_mut() {
+            sub_file.body = sub_file.body.take().filter(|body| !body.is_empty());
+        }
+
+        for sub_dir in self.directories_mut().iter_mut() {
+            sub_dir.clear_bodies();
+        }
+    }
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
@@ -44,9 +55,25 @@ impl AsDirectory for Directory {
         &self.files
     }
 
-    fn symlinks(&self) -> &Vec<Symlink> {
-        &self.symlinks
+    // fn symlinks(&self) -> &Vec<Symlink> {
+    //     &self.symlinks
+    // }
+
+    // fn name_mut(&mut self) -> &mut String {
+    //     &mut self.name
+    // }
+
+    fn directories_mut(&mut self) -> &mut Vec<Directory> {
+        &mut self.directories
     }
+
+    fn files_mut(&mut self) -> &mut Vec<File> {
+        &mut self.files
+    }
+
+    // fn symlinks_mut(&mut self) -> &mut Vec<Symlink> {
+    //     &mut self.symlinks
+    // }
 }
 
 impl TryFrom<&PathBuf> for Directory {
@@ -110,9 +137,25 @@ impl AsDirectory for Pack {
         &self.files
     }
 
-    fn symlinks(&self) -> &Vec<Symlink> {
-        &self.symlinks
+    // fn symlinks(&self) -> &Vec<Symlink> {
+    //     &self.symlinks
+    // }
+
+    // fn name_mut(&mut self) -> &mut String {
+    //     &mut self.name
+    // }
+
+    fn directories_mut(&mut self) -> &mut Vec<Directory> {
+        &mut self.directories
     }
+
+    fn files_mut(&mut self) -> &mut Vec<File> {
+        &mut self.files
+    }
+
+    // fn symlinks_mut(&mut self) -> &mut Vec<Symlink> {
+    //     &mut self.symlinks
+    // }
 }
 
 impl Pack {

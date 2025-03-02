@@ -1,2 +1,1 @@
-mod command;
-pub use command::*;
+pub mod command;

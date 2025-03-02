@@ -1,5 +1,5 @@
 use crate::to_string;
-use crate::types::{AsDirectory, Pack};
+use crate::types::fs::{AsDirectory, Pack};
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use std::fs::{create_dir_all, File};
@@ -35,12 +35,14 @@ fn build_directory(
 }
 
 #[tauri::command]
-pub async fn save_pack(pack: Pack, target_directory: PathBuf) -> Result<PathBuf, String> {
+pub async fn save_pack(mut pack: Pack, target_directory: PathBuf) -> Result<PathBuf, String> {
     let archive_path = target_directory.join("packs");
     if !archive_path.exists() {
         create_dir_all(&archive_path).map_err(to_string)?;
     }
     let archive_name = archive_path.join(&pack.name).with_extension("pck");
+    pack.clear_bodies();
+
     let file = File::create(&archive_name).map_err(to_string)?;
     let enc = GzEncoder::new(file, Compression::best());
     let mut builder = Builder::new(enc);

@@ -1,2 +1,1 @@
-mod file_system;
-pub use file_system::*;
+pub mod fs;

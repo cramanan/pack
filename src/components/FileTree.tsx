@@ -58,7 +58,7 @@ export default function FileTree(props: { directory: Directory } & Callbacks) {
                 {(file) => (
                     <div class="flex items-center gap-2">
                         <div
-                            class="flex items-center"
+                            class="flex items-center select-none"
                             onDblClick={() =>
                                 props.onFileClick && props.onFileClick(file)
                             }

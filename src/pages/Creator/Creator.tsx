@@ -1,11 +1,10 @@
-import { createMutable, modifyMutable } from "solid-js/store";
+import { createMutable } from "solid-js/store";
 import { createStep, MultiSteps, StepProps } from "../../components/MultiSteps";
 import { defaultPack, File, Pack } from "../../types/fs";
-import { createEffect, createResource, createSignal } from "solid-js";
+import { createResource, createSignal } from "solid-js";
 import { appDataDir } from "@tauri-apps/api/path";
 import FileTree from "../../components/FileTree";
 import { savePack } from "../../lib/Pack";
-// import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 
 function Create(props: { pack: Pack } & StepProps) {
     return (
@@ -99,7 +98,6 @@ export default function Creator() {
                 {createPage}
                 {editPage}
                 {savePage}
-                <div>Done !</div>
             </MultiSteps>
         </>
     );

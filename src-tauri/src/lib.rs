@@ -1,6 +1,8 @@
 mod fs;
 mod types;
-use fs::{read_directory, save_pack};
+
+use fs::command::{read_directory, save_pack};
+
 use tauri::generate_handler;
 
 pub fn to_string(value: impl ToString) -> String {
