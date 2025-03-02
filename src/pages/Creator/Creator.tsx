@@ -30,12 +30,6 @@ function Edit(props: { pack: Pack } & StepProps) {
 
     const onSave = () => selectedFile() && (selectedFile()!.body = body());
 
-    // onMount(async () => {
-    //     await unregister("CommandOrControl+S"); // TODO: Maybe remove
-    //     await register("CommandOrControl+S", console.log);
-    // });
-    // onCleanup(() => unregister("CommandOrControl+S"));
-
     return (
         <div class="flex justify-between">
             <div>
@@ -44,6 +38,7 @@ function Edit(props: { pack: Pack } & StepProps) {
                     <FileTree
                         directory={props.pack}
                         onNewFile={setSelectedFile}
+                        onFileClick={setSelectedFile}
                     />
                 </form>
                 <div class="flex gap-3">
@@ -56,7 +51,11 @@ function Edit(props: { pack: Pack } & StepProps) {
                 <h1>editor</h1>
                 <h2>{selectedFile()?.name}</h2>
                 <button onClick={onSave}>Save</button>
-                <textarea class="border" onInput={onInput}></textarea>
+                <textarea
+                    class="border"
+                    onInput={onInput}
+                    value={selectedFile()?.body}
+                ></textarea>
             </aside>
         </div>
     );
@@ -64,11 +63,13 @@ function Edit(props: { pack: Pack } & StepProps) {
 
 function Save(props: { pack: Pack } & StepProps) {
     const [directory] = createResource(appDataDir);
-    const savePackInTargetDirectory = () => {
+    const savePackInTargetDirectory = async () => {
         const targetDirectory = directory();
         if (!targetDirectory) return;
-        savePack(props.pack, targetDirectory);
+        await savePack(props.pack, targetDirectory);
+        props.next();
     };
+
     return (
         <>
             <h2>Save the pack</h2>
@@ -95,9 +96,10 @@ export default function Creator() {
         <>
             <header>Pack Creator</header>
             <MultiSteps>
-                {/* {createPage} */}
+                {createPage}
                 {editPage}
                 {savePage}
+                <div>Done !</div>
             </MultiSteps>
         </>
     );

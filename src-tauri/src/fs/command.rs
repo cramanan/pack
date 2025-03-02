@@ -21,9 +21,10 @@ fn build_directory(
         let mut header = Header::new_gnu();
         header.set_path(path.join(&sub_file.name))?;
         header.set_mode(0o755);
-        header.set_size(0);
+        let data = sub_file.body.clone().unwrap_or_default();
+        header.set_size(data.len() as u64);
         header.set_cksum();
-        builder.append(&header, "".as_bytes())?;
+        builder.append(&header, data.as_bytes())?;
     }
 
     for sub_directory in directory.directories() {

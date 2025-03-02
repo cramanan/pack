@@ -50,14 +50,22 @@ export default function FileTree(props: { directory: Directory } & Callbacks) {
                     <FileTree
                         directory={subdirectory}
                         onNewFile={props.onNewFile}
+                        onFileClick={props.onFileClick}
                     />
                 )}
             </For>
             <For each={props.directory.files}>
                 {(file) => (
                     <div class="flex items-center gap-2">
-                        <FileIcon />
-                        <span>{file.name}</span>
+                        <div
+                            class="flex items-center"
+                            onDblClick={() =>
+                                props.onFileClick && props.onFileClick(file)
+                            }
+                        >
+                            <FileIcon />
+                            <span>{file.name}</span>
+                        </div>
                         <Trash size={20} />
                     </div>
                 )}
