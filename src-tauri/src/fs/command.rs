@@ -1,21 +1,24 @@
-use crate::{
-    to_string,
-    types::fs::{directory::AsDirectory, file::Named, pack::Pack},
-};
+use crate::to_string;
+use crate::types::fs::directory::AsDirectory;
+use crate::types::fs::file::Named;
+use crate::types::fs::pack::Pack;
 use flate2::Compression;
 use flate2::write::GzEncoder;
+use std::fs::File;
 use std::path::PathBuf;
-use std::{fs::File, io::Read};
-use tar::{Builder, Header};
+use tar::Builder;
+use tar::Header;
 
 #[tauri::command]
 pub async fn import_from_directory(path: PathBuf) -> Result<Pack, String> {
-    Pack::try_from(path).map_err(to_string)
+    Pack::try_from(path)
+        .inspect(|pack| println!("{:?}", pack.config()))
+        .map_err(to_string)
 }
 
 fn build_directory(
     builder: &mut Builder<GzEncoder<File>>,
-    directory: &dyn AsDirectory,
+    directory: &impl AsDirectory,
     path: PathBuf,
 ) -> std::io::Result<()> {
     for sub_file in directory.files() {
