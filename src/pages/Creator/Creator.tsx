@@ -1,11 +1,10 @@
 import { createMutable } from "solid-js/store";
 import { createStep, MultiSteps, StepProps } from "../../components/MultiSteps";
 import { defaultPack, File, Pack } from "../../types/fs";
-import { createEffect, createResource, createSignal } from "solid-js";
+import { createResource, createSignal } from "solid-js";
 import { appDataDir } from "@tauri-apps/api/path";
 import FileTree from "../../components/FileTree";
 import { importFromDirectory, openDirectory, savePack } from "../../lib/Pack";
-import { path } from "@tauri-apps/api";
 
 function Create(props: { pack: Pack } & StepProps) {
     const handleImport = async () => {
@@ -31,11 +30,14 @@ function Create(props: { pack: Pack } & StepProps) {
 function Edit(props: { pack: Pack } & StepProps) {
     const [selectedFile, setSelectedFile] = createSignal<File>();
     const [body, setBody] = createSignal("");
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
 
     const onInput = (e: { target: HTMLTextAreaElement }) =>
         setBody(e.target.value);
 
-    const onSave = () => selectedFile() && (selectedFile()!.body = body());
+    const onSave = () =>
+        selectedFile() && (selectedFile()!.body = encoder.encode(body()));
 
     return (
         <div class="flex justify-between">
@@ -61,7 +63,7 @@ function Edit(props: { pack: Pack } & StepProps) {
                 <textarea
                     class="border"
                     onInput={onInput}
-                    value={selectedFile()?.body ?? ""}
+                    value={decoder.decode(selectedFile()?.body)}
                 ></textarea>
             </aside>
         </div>
@@ -85,11 +87,6 @@ function Save(props: { pack: Pack } & StepProps) {
         console.log(path);
         props.next();
     };
-
-    createEffect(async () => {
-        const target = directory();
-        target && console.log(await path.join(target, props.pack.name, ".pck"));
-    });
 
     return (
         <>
