@@ -1,13 +1,10 @@
 mod fs;
 mod types;
+mod utils;
 
 use fs::command::{import_from_directory, save_pack};
 
 use tauri::generate_handler;
-
-pub fn to_string(value: impl ToString) -> String {
-    value.to_string()
-}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

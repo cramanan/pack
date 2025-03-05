@@ -1,8 +1,6 @@
-use std::{io::Error, path::PathBuf};
-
-use serde::{Deserialize, Serialize};
-
 use super::file::{File, Named};
+use serde::{Deserialize, Serialize};
+use std::{io::Error, path::PathBuf};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Directory {
@@ -78,7 +76,7 @@ impl TryFrom<&PathBuf> for Directory {
                     .directories_mut()
                     .push(Directory::try_from(&absolute_path)?);
             } else if file_type.is_file() {
-                let name = entry.file_name().to_str().unwrap().to_string(); // TODO: remove unwrap
+                let name = entry.file_name().to_string_lossy().to_string();
                 directory.files_mut().push(File::new(name));
             }
         }
