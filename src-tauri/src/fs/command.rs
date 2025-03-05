@@ -1,13 +1,10 @@
-use crate::to_string;
-use crate::types::fs::directory::AsDirectory;
-use crate::types::fs::file::Named;
-use crate::types::fs::pack::Pack;
+use crate::types::fs::{directory::AsDirectory, file::Named, pack::Pack};
+use crate::utils::to_string;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 use std::fs::File;
 use std::path::PathBuf;
-use tar::Builder;
-use tar::Header;
+use tar::{Builder, Header};
 
 #[tauri::command]
 pub async fn import_from_directory(path: PathBuf) -> Result<Pack, String> {
@@ -22,7 +19,6 @@ fn build_directory(
     path: PathBuf,
 ) -> std::io::Result<()> {
     for sub_file in directory.files() {
-        println!("{:?}", path.join(sub_file.name()));
         let mut header = Header::new_gnu();
         header.set_path(path.join(sub_file.name()))?;
         header.set_mode(0o755);
@@ -45,12 +41,6 @@ fn build_directory_from_origin(
     path: PathBuf,
 ) -> std::io::Result<()> {
     for subfile in directory.files() {
-        println!(
-            "{:?}, {:?}",
-            origin.join(&path).join(subfile.name()),
-            &path.join(subfile.name())
-        );
-
         builder.append_path_with_name(
             origin.join(&path).join(subfile.name()),
             path.join(subfile.name()),
@@ -71,12 +61,12 @@ pub async fn save_pack(pack: Pack, target_directory: PathBuf) -> Result<PathBuf,
     let enc = GzEncoder::new(file, Compression::best());
     let mut builder = Builder::new(enc);
 
-    if let Some(origin) = pack.origin() {
+    (if let Some(origin) = pack.origin() {
         build_directory_from_origin(&mut builder, &pack, origin, PathBuf::new())
-            .map_err(to_string)?;
     } else {
-        build_directory(&mut builder, &pack, PathBuf::new()).map_err(to_string)?;
-    }
+        build_directory(&mut builder, &pack, PathBuf::new())
+    })
+    .map_err(to_string)?;
 
     builder.finish().map_err(to_string)?;
     Ok(archive_name)
