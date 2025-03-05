@@ -1,10 +1,11 @@
 import { createMutable } from "solid-js/store";
 import { createStep, MultiSteps, StepProps } from "../../components/MultiSteps";
 import { defaultPack, File, Pack } from "../../types/fs";
-import { createResource, createSignal } from "solid-js";
+import { createEffect, createResource, createSignal } from "solid-js";
 import { appDataDir } from "@tauri-apps/api/path";
 import FileTree from "../../components/FileTree";
 import { importFromDirectory, openDirectory, savePack } from "../../lib/Pack";
+import { useSettings } from "../../context/settings";
 
 function Create(props: { pack: Pack } & StepProps) {
     const handleImport = async () => {
@@ -71,13 +72,14 @@ function Edit(props: { pack: Pack } & StepProps) {
 }
 
 function Save(props: { pack: Pack } & StepProps) {
-    const [directory, { mutate }] = createResource(appDataDir, {
-        initialValue: "",
-    });
+    const settings = useSettings();
+    const [directory, setDirectory] = createSignal(
+        settings()?.saveDirectory ?? ""
+    );
 
     const chooseTargetDirectory = async () => {
         const target = await openDirectory();
-        target && mutate(target);
+        target && setDirectory(target);
     };
 
     const savePackInTargetDirectory = async () => {
