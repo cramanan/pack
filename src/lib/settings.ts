@@ -8,3 +8,7 @@ enum Commands {
 export function getSettings() {
     return invoke<Settings>(Commands.GET_SETTINGS);
 }
+
+export async function saveSettings(settings: Settings) {
+    console.log(settings);
+}

@@ -72,10 +72,8 @@ function Edit(props: { pack: Pack } & StepProps) {
 }
 
 function Save(props: { pack: Pack } & StepProps) {
-    const settings = useSettings();
-    const [directory, setDirectory] = createSignal(
-        settings()?.saveDirectory ?? ""
-    );
+    const [settings] = useSettings();
+    const [directory, setDirectory] = createSignal(settings()?.saveDirectory);
 
     const chooseTargetDirectory = async () => {
         const target = await openDirectory();

@@ -1,7 +1,7 @@
-import { createContext, Resource, useContext } from "solid-js";
-import { Settings } from "../types/settings";
+import { createContext, useContext } from "solid-js";
+import { SettingsStore } from "../types/settings";
 
-export const settingsContext = createContext<Resource<Settings>>();
+export const settingsContext = createContext<SettingsStore>();
 
 export const useSettings = () => {
     const context = useContext(settingsContext);
