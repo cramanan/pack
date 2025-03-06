@@ -1,8 +1,9 @@
 import { Show } from "solid-js";
-import { useSettings } from "../../context/settings";
+import { getSettings } from "../../lib/settings";
 
 export default function Settings() {
-    const [settings, { save }] = useSettings();
+    const [settings, { save }] = getSettings();
+
     return (
         <Show when={settings()} fallback="Loading...">
             {(settings) => (

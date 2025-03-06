@@ -45,8 +45,8 @@ impl Pack {
         self
     }
 
-    pub fn origin(&self) -> &Option<PathBuf> {
-        &self.origin
+    pub fn origin(&self) -> Option<&PathBuf> {
+        self.origin.as_ref()
     }
 }
 

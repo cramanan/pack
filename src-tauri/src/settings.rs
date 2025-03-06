@@ -43,7 +43,8 @@ pub fn init_settings(
 
     dbg!(&settings);
 
-    app.manage(settings);
+    app.manage(settings.clone());
+    app.set_theme(Some(settings.theme().to_owned().into()));
     Ok(())
 }
 

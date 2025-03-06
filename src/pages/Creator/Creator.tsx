@@ -1,11 +1,10 @@
 import { createMutable } from "solid-js/store";
 import { createStep, MultiSteps, StepProps } from "../../components/MultiSteps";
 import { defaultPack, File, Pack } from "../../types/fs";
-import { createEffect, createResource, createSignal } from "solid-js";
-import { appDataDir } from "@tauri-apps/api/path";
+import { createSignal, Show } from "solid-js";
 import FileTree from "../../components/FileTree";
 import { importFromDirectory, openDirectory, savePack } from "../../lib/Pack";
-import { useSettings } from "../../context/settings";
+import { getSettings } from "../../lib/settings";
 
 function Create(props: { pack: Pack } & StepProps) {
     const handleImport = async () => {
@@ -72,8 +71,8 @@ function Edit(props: { pack: Pack } & StepProps) {
 }
 
 function Save(props: { pack: Pack } & StepProps) {
-    const [settings] = useSettings();
-    const [directory, setDirectory] = createSignal(settings()?.saveDirectory);
+    const [settings] = getSettings();
+    const [directory, setDirectory] = createSignal("");
 
     const chooseTargetDirectory = async () => {
         const target = await openDirectory();
@@ -89,18 +88,29 @@ function Save(props: { pack: Pack } & StepProps) {
     };
 
     return (
-        <>
-            <h2>Save the pack</h2>
-            <div>
-                <div>{directory()}</div>
-                <div onClick={chooseTargetDirectory}>Choose Target</div>
-                <div>Pack will be saved as: {}</div>
-            </div>
-            <div class="flex gap-3">
-                <button onClick={props.previous}>Back</button>
-                <button onClick={savePackInTargetDirectory}>SAVE</button>
-            </div>
-        </>
+        <Show when={settings()}>
+            {(settings) => {
+                setDirectory(settings().saveDirectory ?? "");
+                return (
+                    <>
+                        <h2>Save the pack</h2>
+                        <div>
+                            <div>{directory()}</div>
+                            <div onClick={chooseTargetDirectory}>
+                                Choose Target
+                            </div>
+                            <div>Pack will be saved as: {}</div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onClick={props.previous}>Back</button>
+                            <button onClick={savePackInTargetDirectory}>
+                                SAVE
+                            </button>
+                        </div>
+                    </>
+                );
+            }}
+        </Show>
     );
 }
 

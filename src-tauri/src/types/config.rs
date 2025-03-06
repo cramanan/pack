@@ -16,7 +16,6 @@ const CONFIG_FILENAME: &str = "pack.config.json";
 impl Pack {
     pub fn config(&self) -> Option<Config> {
         self.origin()
-            .as_ref()
             .and_then(|origin| File::open(origin.join(CONFIG_FILENAME)).ok())
             .and_then(|f| serde_json::from_reader(f).ok())
     }
