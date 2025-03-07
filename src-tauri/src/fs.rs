@@ -67,7 +67,7 @@ pub async fn save_pack(pack: Pack, target_directory: PathBuf) -> Result<PathBuf,
         build_directory(&mut builder, &pack, PathBuf::new())
     })
     .map_err(to_string)?;
-
     builder.finish().map_err(to_string)?;
+
     Ok(archive_name)
 }

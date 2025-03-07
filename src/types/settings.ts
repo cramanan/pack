@@ -9,5 +9,6 @@ export type SettingsStore = [
 ];
 
 export type Settings = {
+    theme: "Light" | "Dark";
     saveDirectory?: string;
 };

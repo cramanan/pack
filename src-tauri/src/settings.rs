@@ -1,24 +1,30 @@
+use crate::{types::settings::Settings, utils::to_string};
+use serde_json::to_writer_pretty;
 use std::{
     fs::OpenOptions,
     io::{Seek, SeekFrom},
+    path::PathBuf,
+    sync::Mutex,
 };
-
 use tauri::{App, Manager};
 
-use crate::types::settings::Settings;
+pub struct SettingsState {
+    settings: Mutex<Settings>,
+    settings_path: PathBuf,
+}
 
 pub fn init_settings(
     app: &mut App,
 ) -> std::result::Result<(), Box<dyn std::error::Error + 'static>> {
-    let settings: Settings = {
-        let resolver = app.path();
-        let settings_path = resolver.app_config_dir()?.join("settings.json");
+    let resolver = app.path();
+    let settings_path = resolver.app_config_dir()?.join("settings.json");
+    let raw_settings: Settings = {
         dbg!(&settings_path);
         let mut settings_file = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
-            .open(settings_path)?;
+            .open(&settings_path)?;
 
         let value = match serde_json::from_reader(&settings_file) {
             Ok(value) => value,
@@ -41,14 +47,37 @@ pub fn init_settings(
         value
     };
 
-    dbg!(&settings);
+    app.set_theme(Some(raw_settings.theme().to_owned().into()));
 
-    app.manage(settings.clone());
-    app.set_theme(Some(settings.theme().to_owned().into()));
+    let settings = Mutex::new(raw_settings);
+    app.manage(SettingsState {
+        settings,
+        settings_path,
+    });
     Ok(())
 }
 
 #[tauri::command]
-pub async fn get_settings(state: tauri::State<'_, Settings>) -> Result<&Settings, String> {
-    Ok(state.inner())
+pub async fn get_settings(state: tauri::State<'_, SettingsState>) -> Result<Settings, String> {
+    let settings = state.settings.lock().map_err(to_string)?;
+    Ok(settings.clone())
+}
+
+#[tauri::command]
+
+pub async fn save_settings(
+    state: tauri::State<'_, SettingsState>,
+    settings: Settings,
+) -> Result<(), String> {
+    let file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(&state.settings_path)
+        .map_err(to_string)?;
+
+    let mut settings_guard = state.settings.lock().map_err(to_string)?;
+
+    *settings_guard = settings;
+
+    to_writer_pretty(file, &*settings_guard).map_err(to_string)
 }

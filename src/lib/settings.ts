@@ -14,7 +14,7 @@ export function getSettings() {
 
     // TODO: add backend mutation
     const set = <K extends keyof Settings>(key: K, value: Settings[K]) =>
-        mutate((prev) => ({ ...prev, [key]: value }));
+        mutate((prev) => prev && { ...prev, [key]: value });
 
     const save = () => invoke(Commands.SAVE_SETTINGS, { settings: settings() });
 

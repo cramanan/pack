@@ -16,7 +16,7 @@ export default function FileTree(props: { directory: Directory } & Callbacks) {
     const addFile = () => {
         const name = prompt("File Name:");
         if (!name?.trim()) return;
-        const file = createMutable<File>({ name });
+        const file = createMutable<File>({ name, body: new Uint8Array() });
         const files = [...props.directory.files, file];
         props.directory.files = files;
 

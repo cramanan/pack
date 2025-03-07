@@ -5,7 +5,7 @@ mod utils;
 
 use fs::{import_from_directory, save_pack};
 
-use settings::{get_settings, init_settings};
+use settings::{get_settings, init_settings, save_settings};
 use tauri::generate_handler;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -18,6 +18,7 @@ pub fn run() {
         .invoke_handler(generate_handler![
             // settings
             get_settings,
+            save_settings,
             // fs
             import_from_directory,
             save_pack,

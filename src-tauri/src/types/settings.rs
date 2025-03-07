@@ -11,7 +11,6 @@ pub struct Settings {
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
 pub enum Theme {
     #[default]
     Light,
@@ -38,4 +37,8 @@ impl Settings {
             ..self
         }
     }
+
+    // pub fn save_directory(&self) -> Option<&PathBuf> {
+    //     self.save_directory.as_ref()
+    // }
 }
